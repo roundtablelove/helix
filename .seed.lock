@@ -1,0 +1,7 @@
+{
+  "repository": "ghcr.io/roundtablelove/helix/seed",
+  "systems": {
+    "x86_64-linux": "sha256:212d648a8e3d8625c37246b316cfa2fbdfa6df7d2d024a0333e7e4154de94af1"
+  },
+  "tag": "00e26beb099aaa512826da2c5807080758ca0fd7"
+}
