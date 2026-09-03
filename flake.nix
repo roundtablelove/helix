@@ -7,12 +7,17 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-seed = {
+      url = "github:roundtablelove/nix-seed";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
     self,
     nixpkgs,
     rust-overlay,
+    nix-seed,
     ...
   }: let
     inherit (nixpkgs) lib;
@@ -39,6 +44,17 @@
       packages.${system}.default.overrideAttrs { buildType = "debug"; };
       */
       default = self.packages.${system}.helix;
+    }
+    # The Nix Seed: a squashfs (Linux) or disk image (macOS) of this
+    # flake's build closure, which CI mounts as /nix/store and builds
+    # against offline. mkSeed supports Linux and Darwin only and throws
+    # elsewhere, so expose it only where it can be built -- flakeExposed
+    # also lists freebsd, i686 and friends.
+    // lib.optionalAttrs (lib.hasSuffix "-linux" system || lib.hasSuffix "-darwin" system) {
+      seed = nix-seed.lib.mkSeed {
+        pkgs = pkgsFor.${system};
+        inherit self;
+      };
     });
     checks =
       lib.mapAttrs (system: pkgs: let

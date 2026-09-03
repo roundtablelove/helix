@@ -1,0 +1,47 @@
+# Build the Nix flake from a Nix Seed.
+#
+# This is cachix.yml with the two Cachix steps swapped for the nix-seed
+# action. Rather than installing Nix and pulling store paths from a
+# binary cache as the build discovers it needs them, the action mounts a
+# seed -- one blob, one mount, no extraction -- containing the whole
+# build closure, and hands the store to the runner user. `nix build` then
+# finds everything already present, with no substituters configured.
+#
+# The seed itself is produced by Seed (.github/workflows/seed.yaml).
+name: Seed Build
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build Flake
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    permissions:
+      contents: read
+      # OIDC for the registry, and read access to the seed package
+      id-token: write
+      packages: read
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v7
+
+    # replaces `cachix/install-nix-action` and `cachix/cachix-action`:
+    # setup only -- mounts the seed as /nix/store and puts the seeded nix
+    # on PATH. no Nix installation, no cache authentication, no token.
+    - name: Mount seed
+      uses: roundtablelove/nix-seed@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build nix flake
+      run: nix build -L
