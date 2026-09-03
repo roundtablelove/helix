@@ -45,3 +45,13 @@ jobs:
         uses: roundtablelove/nix-seed/seed@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Seeding is the one place a binary cache still earns its
+          # keep: it builds the closure that consumers then get offline.
+          # These are the values flake.nix already declares in nixConfig,
+          # which Nix ignores unless the user is trusted -- so pass them
+          # explicitly. Without helix's cache, a handful of crates that
+          # cache.nixos.org has never built (gix-date, gix-diff, ...)
+          # fall through to crates.io, which answers 403 from CI.
+          nix_conf: |
+            extra-substituters = https://helix.cachix.org
+            extra-trusted-public-keys = helix.cachix.org-1:ejp9KQpR1FBI2onstMQ34yogDm4OgU2ru6lIwPvuCVs=
